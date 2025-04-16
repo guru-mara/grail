@@ -14,8 +14,11 @@ app = FastAPI(title="Gold Trading Journal API")
 
 # Configure CORS
 origins = [
-    "http://localhost:3000",  # React frontend
-    "http://localhost:8000",  # For development
+    "http://localhost:3000",
+    "http://localhost:3001",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:3001",
+    # Add any other origins you might need in the future
 ]
 
 app.add_middleware(
@@ -34,3 +37,7 @@ app.include_router(trades.router, prefix="/api/trades", tags=["Trades"])
 @app.get("/")
 def read_root():
     return {"message": "Gold Trading Journal API"}
+
+@app.get("/api/health")
+def health_check():
+    return {"status": "healthy", "service": "Gold Trading Journal API"}

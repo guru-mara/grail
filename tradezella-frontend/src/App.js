@@ -5,9 +5,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import authService from './services/authService';
-import TradesList from './components/trades/TradesList';
-import TradeForm from './components/trades/TradeForm';
-import TradeAnalysis from './components/trades/TradeAnalysis';
+
 // Pages
 import LoginPage from './pages/Auth/LoginPage';
 import RegisterPage from './pages/Auth/RegisterPage';
@@ -18,6 +16,12 @@ import ScenariosPage from './pages/Scenarios/ScenariosPage';
 import SimulationsPage from './pages/Simulations/SimulationsPage';
 import CalculatorsPage from './pages/Calculators/CalculatorsPage';
 import AnalyticsPage from './pages/Analytics/AnalyticsPage';
+
+// Trade Components
+// Choose one approach: either use components/trades or pages/Trades
+import TradesList from './components/trades/TradesList';
+import TradeEntryPage from './pages/Trades/TradeEntryPage';  
+import TradeAnalysisPage from './pages/Trades/TradeAnalysisPage';
 
 // Layout
 import AppLayout from './components/layout/AppLayout';
@@ -79,8 +83,8 @@ const AppRoutes = () => {
         <Route path="calculators" element={<CalculatorsPage />} />
         <Route path="analytics" element={<AnalyticsPage />} />
         <Route path="trades" element={<TradesList />} />
-<Route path="trades/new" element={<TradeForm />} />
-<Route path="trades/:tradeId/analysis" element={<TradeAnalysis />} />
+        <Route path="trades/new" element={<TradeEntryPage />} />
+        <Route path="trades/:tradeId/analysis" element={<TradeAnalysisPage />} />
       </Route>
       
       <Route path="*" element={<Navigate to="/" replace />} />

@@ -15,7 +15,8 @@ import {
   AccountBalance as AccountsIcon,
   Description as TemplatesIcon,
   Assessment as AnalyticsIcon,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  BarChart as TradesIcon
 } from '@mui/icons-material';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -24,6 +25,7 @@ const drawerWidth = 240;
 const menuItems = [
   { text: 'Dashboard', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Accounts', icon: <AccountsIcon />, path: '/accounts' },
+  { text: 'Trades', icon: <TradesIcon />, path: '/trades' },
   { text: 'Templates', icon: <TemplatesIcon />, path: '/templates' },
   { text: 'Analytics', icon: <AnalyticsIcon />, path: '/analytics' },
   { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }

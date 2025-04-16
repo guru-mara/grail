@@ -1,6 +1,7 @@
+// authService.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api/auth';
+const API_URL = 'http://localhost:8000/api/auth';
 
 // Get token from localStorage
 const getToken = () => localStorage.getItem('token');
@@ -35,11 +36,13 @@ const initAuth = () => {
 const register = async (userData) => {
   try {
     const response = await axios.post(`${API_URL}/register`, userData);
-    if (response.data && response.data.token) {
-      setToken(response.data.token);
+    // Check if token is in response and store it
+    if (response.data && response.data.access_token) {
+      setToken(response.data.access_token);
     }
     return response.data;
   } catch (error) {
+    console.error('Registration error:', error);
     throw error.response?.data || { message: 'Registration failed' };
   }
 };
@@ -47,18 +50,27 @@ const register = async (userData) => {
 // Login a user
 const login = async (credentials) => {
   try {
-    const response = await axios.post(`${API_URL}/login`, credentials);
-    console.log('Login response:', response.data);
-    
-    if (response.data && response.data.token) {
-      setToken(response.data.token);
-      console.log('Token stored:', localStorage.getItem('token'));
-      const { token, ...user } = response.data;
-      return user;
-    } else {
-      console.error('No token in response:', response.data);
-      throw { message: 'Login successful but no token received' };
+    // Convert to form data format which FastAPI OAuth2PasswordRequestForm expects
+    const formData = new URLSearchParams();
+    formData.append('username', credentials.username);
+    formData.append('password', credentials.password);
+
+    const response = await axios.post(`${API_URL}/login`, formData, {
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+    });
+
+    // Store the token
+    if (response.data && response.data.access_token) {
+      setToken(response.data.access_token);
+      
+      // Try to get user details
+      const userResponse = await getCurrentUser();
+      return userResponse || { username: credentials.username };
     }
+    
+    return response.data;
   } catch (error) {
     console.error('Login error:', error);
     throw error.response?.data || { message: 'Login failed' };
@@ -81,14 +93,11 @@ const getCurrentUser = async () => {
     return response.data;
   } catch (error) {
     console.error('Error getting current user:', error);
-    setToken(null);
+    if (error.response?.status === 401) {
+      setToken(null); // Clear invalid token
+    }
     return null;
   }
-};
-
-// Check if user is authenticated
-const isAuthenticated = () => {
-  return !!getToken();
 };
 
 // Create named object for export
@@ -98,7 +107,7 @@ const authService = {
   logout,
   getCurrentUser,
   initAuth,
-  isAuthenticated
+  getToken
 };
 
 export default authService;
