@@ -1,22 +1,22 @@
-import axios from 'axios';
-
-const API_URL = '/api/templates';
+// src/services/templateService.js
+import api from './apiService';
 
 // Get all templates
-export const getTemplates = async () => {
+const getTemplates = async () => {
   try {
-    const response = await axios.get(API_URL);
+    const response = await api.get('/api/templates');
     return response.data;
   } catch (error) {
     console.error('Error fetching templates:', error);
-    throw error;
+    // Return empty array instead of throwing error
+    return [];
   }
 };
 
 // Get template by ID
-export const getTemplateById = async (id) => {
+const getTemplateById = async (id) => {
   try {
-    const response = await axios.get(`${API_URL}/${id}`);
+    const response = await api.get(`/api/templates/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error fetching template with ID ${id}:`, error);
@@ -25,9 +25,9 @@ export const getTemplateById = async (id) => {
 };
 
 // Create new template
-export const createTemplate = async (templateData) => {
+const createTemplate = async (templateData) => {
   try {
-    const response = await axios.post(API_URL, templateData);
+    const response = await api.post('/api/templates', templateData);
     return response.data;
   } catch (error) {
     console.error('Error creating template:', error);
@@ -36,9 +36,9 @@ export const createTemplate = async (templateData) => {
 };
 
 // Update template
-export const updateTemplate = async (id, templateData) => {
+const updateTemplate = async (id, templateData) => {
   try {
-    const response = await axios.put(`${API_URL}/${id}`, templateData);
+    const response = await api.put(`/api/templates/${id}`, templateData);
     return response.data;
   } catch (error) {
     console.error(`Error updating template with ID ${id}:`, error);
@@ -47,9 +47,9 @@ export const updateTemplate = async (id, templateData) => {
 };
 
 // Delete template
-export const deleteTemplate = async (id) => {
+const deleteTemplate = async (id) => {
   try {
-    const response = await axios.delete(`${API_URL}/${id}`);
+    const response = await api.delete(`/api/templates/${id}`);
     return response.data;
   } catch (error) {
     console.error(`Error deleting template with ID ${id}:`, error);

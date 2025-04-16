@@ -42,13 +42,6 @@ def create_trade(
     db.refresh(db_trade)
     return db_trade
 
-@router.get("/", response_model=List[TradeResponse])
-def read_user_trades(
-    skip: int = 0, 
-    limit: int = 100, 
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_active_user)
-):
     trades = db.query(Trade).join(Account).filter(
         Account.user_id == current_user.id
     ).order_by(Trade.entry_date.desc()).offset(skip).limit(limit).all()

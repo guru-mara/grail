@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { 
   Container, Typography, Button, Grid, Card, CardContent, 
   CardActions, IconButton, Dialog, DialogTitle, DialogContent, 
-  DialogActions, TextField, Box, CircularProgress, Chip, Paper
+  DialogActions, TextField, Box, CircularProgress, Chip, Paper,
+  Alert
 } from '@mui/material';
 import { 
   Add as AddIcon, 
@@ -45,7 +46,7 @@ const TemplatesPage = () => {
     setup_type: Yup.string(),
     entry_criteria: Yup.string(),
     exit_criteria: Yup.string(),
-    risk_reward_ratio: Yup.number().positive('Must be positive'),
+    risk_reward_ratio: Yup.number().positive('Must be positive').nullable(),
     position_size_rule: Yup.string(),
     notes: Yup.string(),
     tags: Yup.string()
@@ -67,7 +68,7 @@ const TemplatesPage = () => {
     onSubmit: async (values, { resetForm }) => {
       try {
         if (editingTemplate) {
-          await templateService.updateTemplate(editingTemplate.template_id, values);
+          await templateService.updateTemplate(editingTemplate.id, values);
         } else {
           await templateService.createTemplate(values);
         }
@@ -133,9 +134,9 @@ const TemplatesPage = () => {
       </Box>
 
       {error && (
-        <Box sx={{ mb: 2 }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {isLoading ? (
@@ -145,12 +146,12 @@ const TemplatesPage = () => {
       ) : (
         <Grid container spacing={3}>
           {templates.length === 0 ? (
-            <Grid item xs={12}>
+            <Grid sx={{ gridColumn: 'span 12' }}>
               <Typography variant="body1">No templates found. Create your first trade template.</Typography>
             </Grid>
           ) : (
             templates.map((template) => (
-              <Grid item xs={12} sm={6} md={4} key={template.template_id}>
+              <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 4' } }} key={template.id}>
                 <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                   <CardContent sx={{ flexGrow: 1 }}>
                     <Box display="flex" alignItems="center" mb={2}>
@@ -205,7 +206,7 @@ const TemplatesPage = () => {
                     </IconButton>
                     <IconButton 
                       color="error" 
-                      onClick={() => handleDeleteTemplate(template.template_id)}
+                      onClick={() => handleDeleteTemplate(template.id)}
                       aria-label="delete template"
                     >
                       <DeleteIcon />
@@ -231,7 +232,7 @@ const TemplatesPage = () => {
         <form onSubmit={formik.handleSubmit}>
           <DialogContent>
             <Grid container spacing={2}>
-              <Grid item xs={12} sm={6}>
+              <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -244,7 +245,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.template_name && formik.errors.template_name}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -257,7 +258,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.market && formik.errors.market}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -270,7 +271,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.setup_type && formik.errors.setup_type}
                 />
               </Grid>
-              <Grid item xs={12} sm={6}>
+              <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6' } }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -284,8 +285,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.risk_reward_ratio && formik.errors.risk_reward_ratio}
                 />
               </Grid>
-              // Continuing src/pages/Templates/TemplatesPage.jsx
-              <Grid item xs={12}>
+              <Grid sx={{ gridColumn: 'span 12' }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -299,7 +299,7 @@ const TemplatesPage = () => {
                   placeholder="e.g., 2% of account balance"
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid sx={{ gridColumn: 'span 12' }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -314,7 +314,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.entry_criteria && formik.errors.entry_criteria}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid sx={{ gridColumn: 'span 12' }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -329,7 +329,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.exit_criteria && formik.errors.exit_criteria}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid sx={{ gridColumn: 'span 12' }}>
                 <TextField
                   fullWidth
                   margin="normal"
@@ -344,7 +344,7 @@ const TemplatesPage = () => {
                   helperText={formik.touched.notes && formik.errors.notes}
                 />
               </Grid>
-              <Grid item xs={12}>
+              <Grid sx={{ gridColumn: 'span 12' }}>
                 <TextField
                   fullWidth
                   margin="normal"

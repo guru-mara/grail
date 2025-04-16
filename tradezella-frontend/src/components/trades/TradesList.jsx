@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
 import { 
   Container, 
   Paper, 
@@ -24,6 +23,7 @@ import {
   Delete as DeleteIcon
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
+import tradeService from '../../services/tradeService';
 
 function TradesList() {
   const [trades, setTrades] = useState([]);
@@ -34,14 +34,10 @@ function TradesList() {
   useEffect(() => {
     // Fetch user's trades
     const fetchTrades = async () => {
-      const token = localStorage.getItem('token');
-      
       try {
-        const res = await axios.get('http://localhost:5000/api/trades', {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        
-        setTrades(res.data);
+        const data = await tradeService.getTrades();
+        setTrades(data);
+        setError('');
       } catch (error) {
         console.error('Error fetching trades:', error);
         setError('Failed to load trades. Please try again.');
@@ -66,15 +62,11 @@ function TradesList() {
       return;
     }
     
-    const token = localStorage.getItem('token');
-    
     try {
-      await axios.delete(`http://localhost:5000/api/trades/${tradeId}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      await tradeService.deleteTrade(tradeId);
       
       // Remove trade from state
-      setTrades(trades.filter(trade => trade.trade_id !== tradeId));
+      setTrades(trades.filter(trade => trade.id !== tradeId));
     } catch (error) {
       console.error('Error deleting trade:', error);
       alert('Error deleting trade');
@@ -145,7 +137,7 @@ function TradesList() {
                   }
                   
                   return (
-                    <TableRow key={trade.trade_id}>
+                    <TableRow key={trade.id}>
                       <TableCell>{trade.instrument}</TableCell>
                       <TableCell>
                         <Chip 
@@ -184,14 +176,14 @@ function TradesList() {
                       <TableCell align="center">
                         <IconButton
                           color="primary"
-                          onClick={() => handleAnalyze(trade.trade_id)}
+                          onClick={() => handleAnalyze(trade.id)}
                           title="Analyze Trade"
                         >
                           <AnalysisIcon />
                         </IconButton>
                         <IconButton
                           color="error"
-                          onClick={() => handleDeleteTrade(trade.trade_id)}
+                          onClick={() => handleDeleteTrade(trade.id)}
                           title="Delete Trade"
                         >
                           <DeleteIcon />

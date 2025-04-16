@@ -64,3 +64,4 @@ class Trade(Base):
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
     account = relationship("Account", back_populates="trades")
+    templates = relationship("Template", back_populates="owner", cascade="all, delete-orphan")

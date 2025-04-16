@@ -115,11 +115,7 @@ const TradeEntryPage = () => {
       await tradeService.createTrade(formData.accountId, tradeData);
       setSuccess('Trade created successfully!');
       
-      // Reset
-      await tradeService.createTrade(formData.accountId, tradeData);
-      setSuccess('Trade created successfully!');
-      
-      // Reset form or navigate
+      // Reset or navigate
       setTimeout(() => {
         navigate('/trades');
       }, 2000);
@@ -152,14 +148,14 @@ const TradeEntryPage = () => {
         <Box component="form" onSubmit={handleSubmit}>
           <Grid container spacing={3}>
             {/* Trade setup section */}
-            <Grid item xs={12}>
+            <Grid sx={{ gridColumn: 'span 12' }}>
               <Typography variant="h5" component="h2" gutterBottom>
                 Trade Setup
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControl fullWidth>
                 <InputLabel>Trading Account</InputLabel>
                 <Select
@@ -178,7 +174,7 @@ const TradeEntryPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControl fullWidth>
                 <InputLabel>Instrument</InputLabel>
                 <Select
@@ -196,7 +192,7 @@ const TradeEntryPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControl fullWidth>
                 <InputLabel>Direction</InputLabel>
                 <Select
@@ -212,7 +208,7 @@ const TradeEntryPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <TextField
                 label="Entry Price"
                 name="entry_price"
@@ -225,7 +221,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4' } }}>
               <TextField
                 label="Position Size"
                 name="position_size"
@@ -238,7 +234,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4' } }}>
               <TextField
                 label="Stop Loss"
                 name="stop_loss"
@@ -250,7 +246,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={4}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 4' } }}>
               <TextField
                 label="Take Profit"
                 name="take_profit"
@@ -263,14 +259,14 @@ const TradeEntryPage = () => {
             </Grid>
             
             {/* Pre-trade analysis section */}
-            <Grid item xs={12}>
+            <Grid sx={{ gridColumn: 'span 12' }}>
               <Typography variant="h5" component="h2" gutterBottom sx={{ mt: 2 }}>
                 Pre-Trade Analysis
               </Typography>
               <Divider sx={{ mb: 2 }} />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControl fullWidth>
                 <InputLabel>Daily Trend</InputLabel>
                 <Select
@@ -287,7 +283,7 @@ const TradeEntryPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControl fullWidth>
                 <InputLabel>Volume Time</InputLabel>
                 <Select
@@ -305,7 +301,7 @@ const TradeEntryPage = () => {
               </FormControl>
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <TextField
                 label="Higher Timeframe Setup"
                 name="pre_htf_setup"
@@ -316,7 +312,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <TextField
                 label="Lower Timeframe Confirmation"
                 name="pre_ltf_confirmation"
@@ -327,7 +323,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControlLabel
                 control={
                   <Checkbox 
@@ -340,7 +336,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12} md={6}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
               <FormControlLabel
                 control={
                   <Checkbox 
@@ -353,7 +349,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid sx={{ gridColumn: 'span 12' }}>
               <TextField
                 label="Pre-Trade Analysis Notes"
                 name="pre_notes"
@@ -366,7 +362,7 @@ const TradeEntryPage = () => {
               />
             </Grid>
             
-            <Grid item xs={12}>
+            <Grid sx={{ gridColumn: 'span 12' }}>
               <Box display="flex" justifyContent="space-between" mt={2}>
                 <Button 
                   variant="outlined" 

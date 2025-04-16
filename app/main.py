@@ -3,7 +3,7 @@ from fastapi import FastAPI, Depends, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 
-from app.routes import auth, accounts, trades
+from app.routes import accounts, trades, templates
 from app.models import models
 from app.database import engine, get_db
 
@@ -30,9 +30,10 @@ app.add_middleware(
 )
 
 # Include routes
-app.include_router(auth.router, prefix="/api/auth", tags=["Authentication"])
+# Remove the auth router
 app.include_router(accounts.router, prefix="/api/accounts", tags=["Trading Accounts"])
 app.include_router(trades.router, prefix="/api/trades", tags=["Trades"])
+app.include_router(templates.router, prefix="/api/templates", tags=["Templates"])
 
 @app.get("/")
 def read_root():

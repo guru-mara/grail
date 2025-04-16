@@ -11,7 +11,6 @@ import {
 } from '@mui/material';
 import { Menu as MenuIcon, AccountCircle } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
-import { setToken } from '../../config';
 
 const Header = ({ onDrawerToggle }) => {
   const navigate = useNavigate();
@@ -23,11 +22,6 @@ const Header = ({ onDrawerToggle }) => {
 
   const handleClose = () => {
     setAnchorEl(null);
-  };
-
-  const handleLogout = () => {
-    setToken(null);
-    navigate('/login');
   };
 
   const handleProfile = () => {
@@ -60,7 +54,7 @@ const Header = ({ onDrawerToggle }) => {
         <Box>
           <IconButton
             size="large"
-            aria-label="account of current user"
+            aria-label="account settings"
             aria-controls="menu-appbar"
             aria-haspopup="true"
             onClick={handleMenu}
@@ -84,7 +78,6 @@ const Header = ({ onDrawerToggle }) => {
             onClose={handleClose}
           >
             <MenuItem onClick={handleProfile}>Profile</MenuItem>
-            <MenuItem onClick={handleLogout}>Logout</MenuItem>
           </Menu>
         </Box>
       </Toolbar>

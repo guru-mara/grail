@@ -1,63 +1,173 @@
-# app/schemas/trade.py
-from pydantic import BaseModel
+# app/routes/trades.py
+from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy.orm import Session
+from typing import List, Optional
+import json
 from datetime import datetime
-from typing import Optional
-from enum import Enum
 
-class TradeDirection(str, Enum):
-    LONG = "long"
-    SHORT = "short"
+from app.database import get_db
+from app.models.models import User, Account, Trade, TradeStatus
+from app.schemas.trade import TradeCreate, TradeUpdate, TradeResponse
 
-class TradeStatus(str, Enum):
-    OPEN = "open"
-    CLOSED = "closed"
+router = APIRouter()
 
-class PreAnalysisBase(BaseModel):
-    daily_trend: Optional[str] = None
-    clean_range: Optional[bool] = False
-    volume_time: Optional[str] = None
-    previous_session_volume: Optional[bool] = False
-    htf_setup: Optional[str] = None
-    ltf_confirmation: Optional[str] = None
-    notes: Optional[str] = None
+@router.post("/", response_model=TradeResponse)
+def create_trade(
+    trade_data: TradeCreate,
+    account_id: int,
+    db: Session = Depends(get_db)
+):
+    # Check if account exists
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    # Process pre-analysis if provided
+    pre_analysis_json = None
+    if trade_data.pre_analysis:
+        pre_analysis_json = json.dumps(trade_data.pre_analysis.dict())
+    
+    # Create trade
+    trade_dict = trade_data.dict(exclude={"pre_analysis"})
+    db_trade = Trade(
+        **trade_dict,
+        account_id=account_id,
+        pre_analysis=pre_analysis_json
+    )
+    
+    db.add(db_trade)
+    db.commit()
+    db.refresh(db_trade)
+    return db_trade
 
-class PostAnalysisBase(BaseModel):
-    notes: Optional[str] = None
-    rating: Optional[int] = 3
-    emotions: Optional[str] = None
-    lessons_learned: Optional[str] = None
+@router.get("/", response_model=List[TradeResponse])
+def read_user_trades(
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    trades = db.query(Trade).join(Account).order_by(Trade.entry_date.desc()).offset(skip).limit(limit).all()
+    
+    return trades
 
-class TradeBase(BaseModel):
-    instrument: str = "XAUUSD"
-    entry_price: float
-    position_size: float
-    direction: TradeDirection
-    stop_loss: Optional[float] = None
-    take_profit: Optional[float] = None
-    pre_analysis: Optional[PreAnalysisBase] = None
+@router.get("/account/{account_id}", response_model=List[TradeResponse])
+def read_account_trades(
+    account_id: int,
+    skip: int = 0, 
+    limit: int = 100, 
+    db: Session = Depends(get_db)
+):
+    # Check if account exists
+    account = db.query(Account).filter(Account.id == account_id).first()
+    if not account:
+        raise HTTPException(status_code=404, detail="Account not found")
+    
+    trades = db.query(Trade).filter(
+        Trade.account_id == account_id
+    ).order_by(Trade.entry_date.desc()).offset(skip).limit(limit).all()
+    
+    return trades
 
-class TradeCreate(TradeBase):
-    pass
+@router.get("/{trade_id}", response_model=TradeResponse)
+def read_trade(
+    trade_id: int, 
+    db: Session = Depends(get_db)
+):
+    trade = db.query(Trade).filter(Trade.id == trade_id).first()
+    
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    
+    return trade
 
-class TradeUpdate(BaseModel):
-    exit_price: Optional[float] = None
-    exit_date: Optional[datetime] = None
-    post_analysis: Optional[PostAnalysisBase] = None
-    result: Optional[float] = None
-    status: Optional[TradeStatus] = None
+@router.patch("/{trade_id}/close", response_model=TradeResponse)
+def close_trade(
+    trade_id: int,
+    trade_update: TradeUpdate,
+    db: Session = Depends(get_db)
+):
+    # Get trade
+    trade = db.query(Trade).filter(Trade.id == trade_id).first()
+    
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    
+    # Process post-analysis if provided
+    if trade_update.post_analysis:
+        trade.post_analysis = json.dumps(trade_update.post_analysis.dict())
+    
+    # Update trade fields
+    if trade_update.exit_price is not None:
+        trade.exit_price = trade_update.exit_price
+    
+    if trade_update.exit_date is not None:
+        trade.exit_date = trade_update.exit_date
+    else:
+        trade.exit_date = datetime.utcnow()
+    
+    # Calculate result if not provided
+    if trade_update.result is not None:
+        trade.result = trade_update.result
+    elif trade.exit_price and trade.entry_price:
+        # Calculate profit/loss
+        if trade.direction == 'LONG':
+            trade.result = (trade.exit_price - trade.entry_price) * trade.position_size
+        else:
+            trade.result = (trade.entry_price - trade.exit_price) * trade.position_size
+    
+    # Update status
+    trade.status = TradeStatus.CLOSED
+    
+    # Update account balance
+    if trade.result:
+        account = db.query(Account).filter(Account.id == trade.account_id).first()
+        account.current_balance += trade.result
+    
+    db.commit()
+    db.refresh(trade)
+    return trade
 
-class TradeResponse(TradeBase):
-    id: int
-    account_id: int
-    exit_price: Optional[float] = None
-    entry_date: datetime
-    exit_date: Optional[datetime] = None
-    pre_analysis: Optional[str] = None
-    post_analysis: Optional[str] = None
-    result: Optional[float] = None
-    status: TradeStatus
-    created_at: datetime
-    updated_at: Optional[datetime] = None
+@router.patch("/{trade_id}/analysis", response_model=TradeResponse)
+def update_trade_analysis(
+    trade_id: int,
+    pre_analysis: Optional[dict] = None,
+    post_analysis: Optional[dict] = None,
+    db: Session = Depends(get_db)
+):
+    # Get trade
+    trade = db.query(Trade).filter(Trade.id == trade_id).first()
+    
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    
+    # Update pre-analysis if provided
+    if pre_analysis:
+        trade.pre_analysis = json.dumps(pre_analysis)
+    
+    # Update post-analysis if provided
+    if post_analysis:
+        trade.post_analysis = json.dumps(post_analysis)
+    
+    db.commit()
+    db.refresh(trade)
+    return trade
 
-    class Config:
-        orm_mode = True
+@router.delete("/{trade_id}")
+def delete_trade(
+    trade_id: int, 
+    db: Session = Depends(get_db)
+):
+    # Get trade
+    trade = db.query(Trade).filter(Trade.id == trade_id).first()
+    
+    if trade is None:
+        raise HTTPException(status_code=404, detail="Trade not found")
+    
+    # If trade is closed and has affected account balance, revert it
+    if trade.status == TradeStatus.CLOSED and trade.result:
+        account = db.query(Account).filter(Account.id == trade.account_id).first()
+        account.current_balance -= trade.result
+    
+    db.delete(trade)
+    db.commit()
+    return {"message": "Trade deleted successfully"}

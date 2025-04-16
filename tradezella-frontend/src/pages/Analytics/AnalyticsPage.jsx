@@ -3,7 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   Container, Typography, Grid, Paper, Box, CircularProgress, 
   FormControl, InputLabel, Select, MenuItem, Card, CardContent,
-  Divider, Tabs, Tab
+  Divider, Tabs, Tab, Alert
 } from '@mui/material';
 import { 
   BarChart, Bar, LineChart, Line, PieChart, Pie, Cell,
@@ -11,6 +11,7 @@ import {
   ScatterChart, Scatter, ZAxis
 } from 'recharts';
 import simulationService from '../../services/simulationService';
+import api from '../../services/apiService';
 
 const AnalyticsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
@@ -27,18 +28,57 @@ const AnalyticsPage = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
-        // Fetch simulations
-        const simulationsData = await simulationService.getSimulations();
+        // Fetch simulations - Handle potential errors
+        let simulationsData = [];
+        try {
+          simulationsData = await simulationService.getSimulations();
+        } catch (simulationError) {
+          console.error('Error fetching simulations:', simulationError);
+          // Continue with empty array if this fails
+        }
         setSimulations(simulationsData);
         
-        // Fetch simulation stats
-        const statsData = await simulationService.getSimulationStats();
-        setStats(statsData);
+        // Fetch simulation stats - Handle potential errors
+        let statsData = {
+          total_simulations: 0,
+          wins: 0,
+          losses: 0,
+          total_profit: 0,
+          total_loss: 0,
+          avg_win: 0,
+          avg_loss: 0,
+          avg_risk_reward: 0,
+          total_profit_loss: 0
+        };
         
+        try {
+          const fetchedStats = await simulationService.getSimulationStats();
+          if (fetchedStats) {
+            statsData = fetchedStats;
+          }
+        } catch (statsError) {
+          console.error('Error fetching simulation stats:', statsError);
+          // Continue with default stats object if this fails
+        }
+        
+        setStats(statsData);
         setError('');
       } catch (err) {
         console.error('Error fetching analytics data:', err);
-        setError('Failed to load analytics data');
+        // Set default states in case of error
+        setSimulations([]);
+        setStats({
+          total_simulations: 0,
+          wins: 0,
+          losses: 0,
+          total_profit: 0,
+          total_loss: 0,
+          avg_win: 0,
+          avg_loss: 0,
+          avg_risk_reward: 0,
+          total_profit_loss: 0
+        });
+        setError('Failed to load analytics data. Please try again later.');
       } finally {
         setIsLoading(false);
       }
@@ -53,7 +93,7 @@ const AnalyticsPage = () => {
 
   // Format simulation data for charts
   const getWinLossData = () => {
-    if (!simulations.length) return [];
+    if (!simulations || !simulations.length) return [];
     
     const completedSimulations = simulations.filter(sim => sim.simulation_result);
     
@@ -66,7 +106,7 @@ const AnalyticsPage = () => {
 
   // Prepare profit by market data
   const getProfitByMarketData = () => {
-    if (!simulations.length) return [];
+    if (!simulations || !simulations.length) return [];
     
     const marketsMap = {};
     
@@ -94,10 +134,7 @@ const AnalyticsPage = () => {
 
   // Prepare R/R ratio vs win rate scatter data
   const getRiskRewardVsWinRateData = () => {
-    if (!simulations.length) return [];
-    
-    // Simulate different strategy parameters for this example
-    // In a real app, this would come from actual historical data
+    // Simulate different strategy parameters since we don't have real data yet
     return [
       { name: 'Strategy 1', riskRewardRatio: 1.5, winRate: 0.65, profitFactor: 1.95 },
       { name: 'Strategy 2', riskRewardRatio: 2.2, winRate: 0.45, profitFactor: 1.98 },
@@ -107,6 +144,45 @@ const AnalyticsPage = () => {
     ];
   };
 
+  // Generate sample cumulative P/L data if we don't have enough real data
+  const getCumulativePLData = () => {
+    if (!simulations || simulations.length < 2) {
+      // Generate sample data
+      const sampleData = [];
+      let runningTotal = 0;
+      
+      for (let i = 1; i <= 20; i++) {
+        const change = Math.random() > 0.6 ? 
+          Math.random() * 200 : 
+          -Math.random() * 100;
+        
+        runningTotal += change;
+        
+        sampleData.push({
+          name: i,
+          value: parseFloat(runningTotal.toFixed(2))
+        });
+      }
+      
+      return sampleData;
+    }
+    
+    // Use real data if available
+    return simulations
+      .filter(sim => sim.simulation_result)
+      .map((sim, index) => {
+        const prevValue = index > 0 ? simulations
+          .filter(s => s.simulation_result)
+          .slice(0, index)
+          .reduce((sum, s) => sum + (s.profit_loss || 0), 0) : 0;
+        
+        return {
+          name: index + 1,
+          value: parseFloat((prevValue + (sim.profit_loss || 0)).toFixed(2))
+        };
+      });
+  };
+
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       <Typography variant="h4" component="h1" gutterBottom>
@@ -114,9 +190,9 @@ const AnalyticsPage = () => {
       </Typography>
 
       {error && (
-        <Box sx={{ mb: 2 }}>
-          <Typography color="error">{error}</Typography>
-        </Box>
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {error}
+        </Alert>
       )}
 
       {isLoading ? (
@@ -127,7 +203,7 @@ const AnalyticsPage = () => {
         <>
           {/* Stats Summary Cards */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 3' } }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -139,12 +215,12 @@ const AnalyticsPage = () => {
                       'N/A'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
-                    {stats ? `${stats.wins} / ${stats.total_simulations} trades` : 'No data'}
+                    {stats ? `${stats.wins || 0} / ${stats.total_simulations || 0} trades` : 'No data'}
                   </Typography>
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 3' } }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -152,7 +228,7 @@ const AnalyticsPage = () => {
                   </Typography>
                   <Typography variant="h4" color="primary">
                     {stats && stats.total_profit && stats.total_loss ? 
-                      (stats.total_profit / stats.total_loss).toFixed(2) : 
+                      (stats.total_profit / Math.max(stats.total_loss, 1)).toFixed(2) : 
                       'N/A'}
                   </Typography>
                   <Typography variant="body2" color="text.secondary">
@@ -161,7 +237,7 @@ const AnalyticsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 3' } }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -176,7 +252,7 @@ const AnalyticsPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid sx={{ gridColumn: { xs: 'span 12', sm: 'span 6', md: 'span 3' } }}>
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
@@ -217,19 +293,7 @@ const AnalyticsPage = () => {
                   </Typography>
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
-                      data={simulations
-                        .filter(sim => sim.simulation_result)
-                        .map((sim, index) => {
-                          const prevValue = index > 0 ? simulations
-                            .filter(s => s.simulation_result)
-                            .slice(0, index)
-                            .reduce((sum, s) => sum + (s.profit_loss || 0), 0) : 0;
-                          
-                          return {
-                            name: index + 1,
-                            value: prevValue + (sim.profit_loss || 0)
-                          };
-                        })}
+                      data={getCumulativePLData()}
                       margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
                     >
                       <CartesianGrid strokeDasharray="3 3" />
@@ -252,7 +316,7 @@ const AnalyticsPage = () => {
               {/* Win/Loss Tab */}
               {tabValue === 1 && (
                 <Grid container spacing={3}>
-                  <Grid item xs={12} md={6}>
+                  <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
                     <Box sx={{ height: 300 }}>
                       <Typography variant="h6" gutterBottom>
                         Win/Loss Distribution
@@ -279,7 +343,7 @@ const AnalyticsPage = () => {
                       </ResponsiveContainer>
                     </Box>
                   </Grid>
-                  <Grid item xs={12} md={6}>
+                  <Grid sx={{ gridColumn: { xs: 'span 12', md: 'span 6' } }}>
                     <Box sx={{ height: 300 }}>
                       <Typography variant="h6" gutterBottom>
                         Profit/Loss Distribution
@@ -299,7 +363,6 @@ const AnalyticsPage = () => {
                           <Bar 
                             dataKey="value" 
                             name="P/L" 
-                            fill={(data) => data.value >= 0 ? '#4CAF50' : '#F44336'} 
                           >
                             {[
                               { name: 'Wins', value: stats?.total_profit || 0 },

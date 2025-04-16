@@ -1,22 +1,10 @@
 // src/services/accountService.js
-import axios from 'axios';
-
-const API_URL = 'http://localhost:8000/api/accounts';
-
-// Helper to get auth token and create auth header
-const getAuthHeader = () => {
-  const token = localStorage.getItem('token');
-  return {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  };
-};
+import api from './apiService';
 
 // Get all accounts for a user
 const getAccounts = async () => {
   try {
-    const response = await axios.get(API_URL, getAuthHeader());
+    const response = await api.get('/api/accounts');
     return response.data;
   } catch (error) {
     console.error('Error fetching accounts:', error);
@@ -27,7 +15,7 @@ const getAccounts = async () => {
 // Create a new account
 const createAccount = async (accountData) => {
   try {
-    const response = await axios.post(API_URL, accountData, getAuthHeader());
+    const response = await api.post('/api/accounts', accountData);
     return response.data;
   } catch (error) {
     console.error('Error creating account:', error);
@@ -38,7 +26,7 @@ const createAccount = async (accountData) => {
 // Get account by ID
 const getAccountById = async (accountId) => {
   try {
-    const response = await axios.get(`${API_URL}/${accountId}`, getAuthHeader());
+    const response = await api.get(`/api/accounts/${accountId}`);
     return response.data;
   } catch (error) {
     console.error('Error fetching account:', error);
@@ -49,7 +37,7 @@ const getAccountById = async (accountId) => {
 // Delete an account
 const deleteAccount = async (accountId) => {
   try {
-    const response = await axios.delete(`${API_URL}/${accountId}`, getAuthHeader());
+    const response = await api.delete(`/api/accounts/${accountId}`);
     return response.data;
   } catch (error) {
     console.error('Error deleting account:', error);
